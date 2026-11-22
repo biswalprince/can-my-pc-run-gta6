@@ -2,7 +2,6 @@
 
 import { FormEvent, useState } from "react";
 import { HardwareAutocomplete } from "@/components/HardwareAutocomplete";
-import { cpuOptions, gpuOptions } from "@/data/hardwareCatalog";
 
 type Setup = {
   gpu: string;
@@ -79,11 +78,11 @@ export default function Home() {
             <div className="field-grid">
               <label className="field field-wide">
                 <span>Graphics card <b>*</b></span>
-                <HardwareAutocomplete id="gpu" value={setup.gpu} options={gpuOptions} onChange={(value) => update("gpu", value)} placeholder="Search a desktop or laptop GPU" />
+                <HardwareAutocomplete id="gpu" value={setup.gpu} kind="gpu" onChange={(value) => update("gpu", value)} placeholder="Search the GPU catalog" />
               </label>
               <label className="field field-wide">
                 <span>Processor <b>*</b></span>
-                <HardwareAutocomplete id="cpu" value={setup.cpu} options={cpuOptions} onChange={(value) => update("cpu", value)} placeholder="Search a desktop or laptop CPU" />
+                <HardwareAutocomplete id="cpu" value={setup.cpu} kind="cpu" onChange={(value) => update("cpu", value)} placeholder="Search the CPU catalog" />
               </label>
               <label className="field">
                 <span>System memory <b>*</b></span>
@@ -145,10 +144,11 @@ export default function Home() {
 
       <footer className="footer">
         <a className="brand footer-brand" href="#top"><span className="brand-mark" aria-hidden="true">C</span><span className="brand-name">CAN MY PC RUN <b>GTA 6?</b></span></a>
-        <p>Independent fan-made performance projection. Not affiliated with Rockstar Games.</p>
+        <p>Independent fan-made performance projection. Not affiliated with Rockstar Games.<br />Hardware names from <a href="https://gettechapi.github.io/TechAPI/" target="_blank" rel="noreferrer">TechAPI</a> · <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">CC BY-SA 4.0</a>.</p>
         <a href="#top" className="back-top">BACK TO TOP ↑</a>
       </footer>
     </main>
   );
 }
+
 

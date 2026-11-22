@@ -137,3 +137,6 @@ h1 em, h2 em { color: var(--orange); font-style: normal; }
 .autocomplete-option small { flex: 0 0 auto; color: #818b82; font-size: 8px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .autocomplete-empty { position: absolute; z-index: 20; top: calc(100% + 5px); left: 0; right: 0; padding: 12px; border: 1px solid #d5dbd0; background: #fffefa; color: #747d76; font-size: 10px; box-shadow: 0 14px 30px rgb(23 26 27 / 13%); }
 @media (max-width: 520px) { .autocomplete-option { align-items: flex-start; flex-direction: column; gap: 4px; } }
+
+.autocomplete-hint { position: absolute; z-index: 20; top: calc(100% + 5px); left: 0; right: 0; padding: 12px; border: 1px solid #d5dbd0; background: #fffefa; color: #747d76; font-size: 10px; box-shadow: 0 14px 30px rgb(23 26 27 / 13%); }
+.footer p a { text-decoration: underline; text-underline-offset: 2px; }
