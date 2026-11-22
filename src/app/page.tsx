@@ -12,16 +12,22 @@ type Setup = {
   quality: string;
 };
 
-type EstimateResponse = {
+type EstimateResult = {
   status: "estimated";
   low: number;
   high: number;
   confidence: string;
   summary: string;
   assumptions: string[];
+  proxyPreset: string;
   evidence: { game: string; fps: number; machines: number; url: string }[];
   hardware: { gpu: string; cpu: string; memory: number; resolution: string; quality: string };
 } | { status: "unsupported"; message: string };
+
+type EstimateResponse = {
+  selected: EstimateResult;
+  matrix: { resolution: string; quality: string; result: EstimateResult }[];
+};
 
 const initialSetup: Setup = {
   gpu: "",
@@ -33,10 +39,11 @@ const initialSetup: Setup = {
 
 export default function Home() {
   const [setup, setSetup] = useState(initialSetup);
-  const [estimate, setEstimate] = useState<EstimateResponse | null>(null);
+  const [projection, setProjection] = useState<EstimateResponse | null>(null);
   const [estimateError, setEstimateError] = useState("");
   const [estimating, setEstimating] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const estimate = projection?.selected ?? null;
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("theme");
@@ -59,14 +66,14 @@ export default function Home() {
 
   function update(field: keyof Setup, value: string) {
     setSetup((current) => ({ ...current, [field]: value }));
-    setEstimate(null);
+    setProjection(null);
     setEstimateError("");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setEstimating(true);
-    setEstimate(null);
+    setProjection(null);
     setEstimateError("");
     try {
       const response = await fetch("/api/estimate", {
@@ -76,7 +83,7 @@ export default function Home() {
       });
       const payload = await response.json() as EstimateResponse | { error: string };
       if (!response.ok) throw new Error("error" in payload ? payload.error : "The estimate could not be created.");
-      setEstimate(payload as EstimateResponse);
+      setProjection(payload as EstimateResponse);
     } catch (error) {
       setEstimateError(error instanceof Error ? error.message : "The estimate could not be created.");
     } finally {
@@ -128,7 +135,7 @@ export default function Home() {
 
       <section className="disclosure" role="note">
         <span className="disclosure-icon" aria-hidden="true">i</span>
-        <p><strong>Early projection, not a benchmark.</strong> GTA 6 PC requirements and PC benchmark results are not available for this estimate. We’ll use comparable-game data and show the assumptions.</p>
+        <p><strong>Early projection, not a benchmark.</strong> No official PC version or requirements have been announced. This comparable-game estimate cannot determine launch compatibility.</p>
       </section>
 
       <section className="workspace" id="estimator">
@@ -165,7 +172,7 @@ export default function Home() {
                 <small>Generic comparison tier until GTA 6 PC settings are confirmed.</small>
               </label>
             </div>
-            <button className="submit-button" type="submit" disabled={estimating}>{estimating ? "CALCULATING…" : "CHECK MY PROJECTION"} <span aria-hidden="true">↗</span></button>
+            <button className="submit-button" type="submit" disabled={estimating}>{estimating ? "CALCULATING…" : "GENERATE FPS PROJECTIONS"} <span aria-hidden="true">↗</span></button>
           </form>
         </div>
 
@@ -186,9 +193,14 @@ export default function Home() {
           <div className="result-meta">
             <span>DATA BASIS</span><b>{estimate?.status === "estimated" ? `${estimate.evidence.length} PROXIES` : "COMPARABLE GAMES"}</b>
           </div>
+          <div className="compatibility-status" role="note">
+            <div><span>PC LAUNCH COMPATIBILITY</span><b>UNKNOWN</b></div>
+            <p>No official PC version or requirements to compare against yet. This FPS projection cannot tell whether the game will launch on this PC.</p>
+          </div>
           {estimate?.status === "estimated" && <>
             <div className="submitted-setup"><span>YOUR CONFIG</span><b>{estimate.hardware.gpu} · {estimate.hardware.cpu} · {estimate.hardware.memory} GB · {estimate.hardware.resolution} · {estimate.hardware.quality}</b></div>
             <div className="estimate-details">
+              <p className="proxy-tier">Proxy settings used: <b>{estimate.proxyPreset}</b> · {estimate.hardware.resolution}</p>
               <h3>Comparable evidence</h3>
               <ul>{estimate.evidence.map((item) => <li key={item.game}><a href={item.url} target="_blank" rel="noreferrer">{item.game}</a><span>{item.fps} FPS source median · {item.machines} GPUs</span></li>)}</ul>
               <h3>Assumptions</h3>
@@ -198,14 +210,41 @@ export default function Home() {
         </aside>
       </section>
 
+      {projection && <section className="settings-projections" aria-labelledby="settings-projections-title">
+        <div className="settings-projections-heading">
+          <div>
+            <p className="eyebrow"><span>03</span> PERFORMANCE BY SETTINGS</p>
+            <h2 id="settings-projections-title">Your projected FPS ranges</h2>
+          </div>
+          <p>Each cell is an average-FPS projection from comparable-game data. “No range” means the benchmark snapshot doesn’t support that combination.</p>
+        </div>
+        <div className="projection-table-wrap">
+          <table className="projection-table">
+            <thead><tr><th scope="col">Resolution</th>{["Low", "Medium", "High", "Ultra"].map((quality) => <th scope="col" key={quality}>{quality}</th>)}</tr></thead>
+            <tbody>{["1080p", "1440p", "4K"].map((resolution) => <tr key={resolution}>
+              <th scope="row">{resolution}</th>
+              {["Low", "Medium", "High", "Ultra"].map((quality) => {
+                const cell = projection.matrix.find((item) => item.resolution === resolution && item.quality === quality);
+                const selected = setup.resolution === resolution && setup.quality === quality;
+                return <td className={selected ? "is-selected" : ""} key={quality}>
+                  {cell?.result.status === "estimated"
+                    ? <><b className="matrix-range">{cell.result.low}–{cell.result.high}</b><span className="matrix-unit">FPS</span><small>Proxy: {cell.result.proxyPreset}</small></>
+                    : <span className="matrix-unavailable" title={cell?.result.status === "unsupported" ? cell.result.message : "No estimate available."}>No range</span>}
+                </td>;
+              })}
+            </tr>)}</tbody>
+          </table>
+        </div>
+      </section>}
+
       <section className="method-section" id="method">
         <div className="method-intro">
-          <p className="eyebrow"><span>03</span> HOW IT WORKS</p>
+          <p className="eyebrow"><span>04</span> HOW IT WORKS</p>
           <h2>Evidence first.<br /><em>Guesswork labeled.</em></h2>
           <p>Comparable games can give us a useful starting point—but they can’t guarantee how a different PC version will run.</p>
         </div>
         <div className="method-steps">
-            <article className="method-step"><span>01</span><div><h3>Match the workload</h3><p>Compare your parts against demanding games at the selected resolution and a similar quality tier.</p></div><b>↗</b></article>
+          <article className="method-step"><span>01</span><div><h3>Match the workload</h3><p>Compare your parts against demanding games, then show projected ranges across settings.</p></div><b>↗</b></article>
           <article className="method-step"><span>02</span><div><h3>Build a range</h3><p>Use relevant benchmark results and widen the range when evidence is thin.</p></div><b>↗</b></article>
           <article className="method-step"><span>03</span><div><h3>Show the basis</h3><p>See which comparisons informed the estimate, with the assumptions made clear.</p></div><b>↗</b></article>
         </div>
@@ -213,7 +252,7 @@ export default function Home() {
 
       <section className="feedback-section" id="feedback">
         <div className="feedback-intro">
-          <p className="eyebrow"><span>04</span> YOUR FEEDBACK</p>
+          <p className="eyebrow"><span>05</span> YOUR FEEDBACK</p>
           <h2>Help us make<br /><em>this better.</em></h2>
           <p>Tell us what’s confusing, what’s missing, or what you’d like to see next. Your note goes straight to the project owner.</p>
         </div>

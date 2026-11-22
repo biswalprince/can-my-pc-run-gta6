@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint .",
     "catalog:sync": "node scripts/sync-hardware-catalog.mjs",
-    "benchmarks:sync": "node scripts/sync-benchmark-data.mjs"
+    "benchmarks:sync": "node scripts/sync-benchmark-data.mjs",
+    "estimator:evaluate": "node scripts/evaluate-proxy-scaling.mjs"
   },
   "repository": {
     "type": "git",
