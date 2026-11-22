@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   --ink: #171a1b;
   --muted: #707777;
   --paper: #f4f3ee;
@@ -18,6 +19,10 @@ a { color: inherit; text-decoration: none; }
 button, input, select { font: inherit; }
 .site-shell { width: min(1360px, calc(100% - 72px)); margin: 0 auto; }
 .topbar { height: 82px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+.topbar-actions { display: flex; align-items: center; gap: 20px; }
+.theme-toggle { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 0 10px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; font-size: 8px; font-weight: 800; letter-spacing: .1em; }
+.theme-toggle:hover { border-color: var(--muted); }
+.theme-toggle span { color: var(--orange); font-size: 14px; line-height: 1; }
 .brand { display: inline-flex; align-items: center; gap: 11px; }
 .brand-mark { display: grid; place-items: center; width: 31px; height: 31px; background: var(--lime); color: var(--ink); font-size: 18px; font-weight: 900; transform: skew(-8deg); }
 .brand-name { font-size: 11px; font-weight: 700; letter-spacing: .11em; }
@@ -113,6 +118,8 @@ h1 em, h2 em { color: var(--orange); font-style: normal; }
   .brand-name { font-size: 9px; letter-spacing: .08em; }
   .topbar-status { font-size: 7px; letter-spacing: .08em; }
   .topbar-status .status-dot { width: 6px; height: 6px; }
+  .topbar-actions { gap: 8px; }
+  .theme-toggle { gap: 5px; min-height: 30px; padding: 0 7px; font-size: 7px; }
   .hero { padding-top: 35px; }
   .hero-lede { font-size: 13px; }
   .hero-visual { height: 225px; }
@@ -140,3 +147,52 @@ h1 em, h2 em { color: var(--orange); font-style: normal; }
 
 .autocomplete-hint { position: absolute; z-index: 20; top: calc(100% + 5px); left: 0; right: 0; padding: 12px; border: 1px solid #d5dbd0; background: #fffefa; color: #747d76; font-size: 10px; box-shadow: 0 14px 30px rgb(23 26 27 / 13%); }
 .footer p a { text-decoration: underline; text-underline-offset: 2px; }
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #edf1ec;
+  --muted: #a0aaa3;
+  --paper: #111614;
+  --panel: #1a211e;
+  --line: #353e39;
+  --night: #101615;
+}
+
+:root[data-theme="dark"] .hero-lede,
+:root[data-theme="dark"] .method-intro > p:last-child { color: #b5bfb8; }
+:root[data-theme="dark"] .disclosure { border-color: #55443c; background: #28201c; }
+:root[data-theme="dark"] .disclosure p { color: #d0bdb3; }
+:root[data-theme="dark"] .disclosure strong { color: var(--ink); }
+:root[data-theme="dark"] .required-note { color: #aab4ad; }
+:root[data-theme="dark"] .field { color: #c6cec8; }
+:root[data-theme="dark"] .field input,
+:root[data-theme="dark"] .field select,
+:root[data-theme="dark"] .autocomplete > input { border-color: #3b4740; background: #202824; color: var(--ink); }
+:root[data-theme="dark"] .field input::placeholder,
+:root[data-theme="dark"] .autocomplete > input::placeholder { color: #89958d; }
+:root[data-theme="dark"] .input-suffix i,
+:root[data-theme="dark"] .field small { color: #a0aaa3; }
+:root[data-theme="dark"] .result-panel { background: #1a211e; }
+:root[data-theme="dark"] .result-index,
+:root[data-theme="dark"] .result-label,
+:root[data-theme="dark"] .result-number span,
+:root[data-theme="dark"] .result-status { color: #a8b3ab; }
+:root[data-theme="dark"] .result-number { color: #d7dfd8; }
+:root[data-theme="dark"] .result-divider { background: #37423b; }
+:root[data-theme="dark"] .result-meta { border-color: #37423b; color: #a2ada5; }
+:root[data-theme="dark"] .result-copy { color: #b7c1b9; }
+:root[data-theme="dark"] .result-meta b { color: #d2dad3; }
+:root[data-theme="dark"] .submitted-setup { border-color: #465645; background: #202920; }
+:root[data-theme="dark"] .submitted-setup span { color: #a9b6a9; }
+:root[data-theme="dark"] .submitted-setup b { color: #d0dbcf; }
+:root[data-theme="dark"] .method-step p { color: #b1bbb3; }
+:root[data-theme="dark"] .method-step > b { color: #a0aaa3; }
+:root[data-theme="dark"] .footer p,
+:root[data-theme="dark"] .back-top { color: #a0aaa3; }
+:root[data-theme="dark"] .autocomplete-list,
+:root[data-theme="dark"] .autocomplete-empty,
+:root[data-theme="dark"] .autocomplete-hint { border-color: #3b4740; background: #1a211e; color: #b9c3bb; }
+:root[data-theme="dark"] .autocomplete-option { color: #e1e7e1; }
+:root[data-theme="dark"] .autocomplete-option:hover,
+:root[data-theme="dark"] .autocomplete-option.is-active { background: #2a3527; }
+:root[data-theme="dark"] .autocomplete-option small { color: #a4b0a5; }

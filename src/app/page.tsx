@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { HardwareAutocomplete } from "@/components/HardwareAutocomplete";
 
 type Setup = {
@@ -22,6 +22,26 @@ const initialSetup: Setup = {
 export default function Home() {
   const [setup, setSetup] = useState(initialSetup);
   const [submitted, setSubmitted] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem("theme");
+    const initialTheme = savedTheme === "dark" || savedTheme === "light"
+      ? savedTheme
+      : window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+
+    setTheme(initialTheme);
+    document.documentElement.dataset.theme = initialTheme;
+  }, []);
+
+  function toggleTheme() {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    document.documentElement.dataset.theme = nextTheme;
+    window.localStorage.setItem("theme", nextTheme);
+  }
 
   function update(field: keyof Setup, value: string) {
     setSetup((current) => ({ ...current, [field]: value }));
@@ -40,7 +60,19 @@ export default function Home() {
           <span className="brand-mark" aria-hidden="true">C</span>
           <span className="brand-name">CAN MY PC RUN <b>GTA 6?</b></span>
         </a>
-        <div className="topbar-status"><span className="status-dot" /> PROJECTION PREVIEW</div>
+        <div className="topbar-actions">
+          <div className="topbar-status"><span className="status-dot" /> PROJECTION PREVIEW</div>
+          <button
+            className="theme-toggle"
+            type="button"
+            onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-pressed={theme === "dark"}
+          >
+            <span aria-hidden="true">{theme === "dark" ? "☼" : "◐"}</span>
+            {theme === "dark" ? "LIGHT" : "DARK"}
+          </button>
+        </div>
       </header>
 
       <section className="hero" id="top">
