@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "catalog:sync": "node scripts/sync-hardware-catalog.mjs"
+    "catalog:sync": "node scripts/sync-hardware-catalog.mjs",
+    "benchmarks:sync": "node scripts/sync-benchmark-data.mjs"
   },
   "repository": {
     "type": "git",

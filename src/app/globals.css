@@ -88,6 +88,15 @@ h1 em, h2 em { color: var(--orange); font-style: normal; }
 .submitted-setup { display: flex; flex-direction: column; gap: 7px; margin-top: 11px; padding: 12px; border: 1px solid #d1d8c7; background: #f8faef; }
 .submitted-setup span { color: #7c877b; font-size: 8px; font-weight: 800; letter-spacing: .13em; }
 .submitted-setup b { color: #4c574d; font-size: 10px; line-height: 1.4; }
+.estimate-details { margin-top: 18px; padding-top: 15px; border-top: 1px solid #d8dbd4; }
+.estimate-details h3 { margin: 0 0 9px; color: #59645b; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; }
+.estimate-details ul { display: flex; flex-direction: column; gap: 8px; margin: 0 0 17px; padding: 0; list-style: none; }
+.estimate-details li { display: flex; justify-content: space-between; gap: 10px; color: #6b746d; font-size: 9px; line-height: 1.5; }
+.estimate-details li a { text-decoration: underline; text-underline-offset: 2px; }
+.estimate-details li span { flex: 0 0 auto; color: #89918b; text-align: right; }
+.estimate-details .assumption-list { gap: 7px; padding-left: 14px; list-style: disc; }
+.estimate-details .assumption-list li { display: list-item; }
+.submit-button:disabled { cursor: wait; opacity: .75; }
 .method-section { display: grid; grid-template-columns: .85fr 1.15fr; gap: 60px; padding: 73px 0 68px; }
 .method-intro h2 { margin: 18px 0 14px; font-size: clamp(34px, 4vw, 51px); line-height: .98; letter-spacing: -.075em; }
 .method-intro > p:last-child { max-width: 320px; color: #6d7671; font-size: 12px; line-height: 1.7; }
@@ -185,6 +194,10 @@ h1 em, h2 em { color: var(--orange); font-style: normal; }
 :root[data-theme="dark"] .submitted-setup { border-color: #465645; background: #202920; }
 :root[data-theme="dark"] .submitted-setup span { color: #a9b6a9; }
 :root[data-theme="dark"] .submitted-setup b { color: #d0dbcf; }
+:root[data-theme="dark"] .estimate-details { border-color: #37423b; }
+:root[data-theme="dark"] .estimate-details h3 { color: #d2dad3; }
+:root[data-theme="dark"] .estimate-details li { color: #b7c1b9; }
+:root[data-theme="dark"] .estimate-details li span { color: #a2ada5; }
 :root[data-theme="dark"] .method-step p { color: #b1bbb3; }
 :root[data-theme="dark"] .method-step > b { color: #a0aaa3; }
 :root[data-theme="dark"] .footer p,

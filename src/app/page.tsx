@@ -12,6 +12,17 @@ type Setup = {
   quality: string;
 };
 
+type EstimateResponse = {
+  status: "estimated";
+  low: number;
+  high: number;
+  confidence: string;
+  summary: string;
+  assumptions: string[];
+  evidence: { game: string; fps: number; machines: number; url: string }[];
+  hardware: { gpu: string; cpu: string; memory: number; resolution: string; quality: string };
+} | { status: "unsupported"; message: string };
+
 const initialSetup: Setup = {
   gpu: "",
   cpu: "",
@@ -22,7 +33,9 @@ const initialSetup: Setup = {
 
 export default function Home() {
   const [setup, setSetup] = useState(initialSetup);
-  const [submitted, setSubmitted] = useState(false);
+  const [estimate, setEstimate] = useState<EstimateResponse | null>(null);
+  const [estimateError, setEstimateError] = useState("");
+  const [estimating, setEstimating] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
@@ -46,12 +59,29 @@ export default function Home() {
 
   function update(field: keyof Setup, value: string) {
     setSetup((current) => ({ ...current, [field]: value }));
-    setSubmitted(false);
+    setEstimate(null);
+    setEstimateError("");
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitted(true);
+    setEstimating(true);
+    setEstimate(null);
+    setEstimateError("");
+    try {
+      const response = await fetch("/api/estimate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...setup, memory: Number(setup.memory) }),
+      });
+      const payload = await response.json() as EstimateResponse | { error: string };
+      if (!response.ok) throw new Error("error" in payload ? payload.error : "The estimate could not be created.");
+      setEstimate(payload as EstimateResponse);
+    } catch (error) {
+      setEstimateError(error instanceof Error ? error.message : "The estimate could not be created.");
+    } finally {
+      setEstimating(false);
+    }
   }
 
   return (
@@ -135,7 +165,7 @@ export default function Home() {
                 <small>Generic comparison tier until GTA 6 PC settings are confirmed.</small>
               </label>
             </div>
-            <button className="submit-button" type="submit">CHECK MY PROJECTION <span aria-hidden="true">↗</span></button>
+            <button className="submit-button" type="submit" disabled={estimating}>{estimating ? "CALCULATING…" : "CHECK MY PROJECTION"} <span aria-hidden="true">↗</span></button>
           </form>
         </div>
 
@@ -143,22 +173,28 @@ export default function Home() {
           <div className="result-topline"><span className="eyebrow">YOUR PROJECTION</span><span className="result-index">01 / PC</span></div>
           <div className="result-main">
             <span className="result-label">ESTIMATED FRAME RATE</span>
-            <div className="result-number">— <span>FPS</span></div>
-            <p className="result-status"><span className="status-dot" /> {submitted ? "NO MATCHING DATA YET" : "AWAITING HARDWARE INPUT"}</p>
+            <div className="result-number">{estimate?.status === "estimated" ? <>{estimate.low}–{estimate.high} <span>FPS</span></> : <>— <span>FPS</span></>}</div>
+            <p className="result-status"><span className="status-dot" /> {estimating ? "BUILDING PROJECTION" : estimate?.status === "estimated" ? "VERY LOW CONFIDENCE · PROJECTION" : estimate?.status === "unsupported" ? "NO DEFENSIBLE RANGE" : estimateError ? "ESTIMATE ERROR" : "AWAITING HARDWARE INPUT"}</p>
           </div>
           <div className="result-divider" />
           <p className="result-copy">
-            {submitted
-              ? "Your setup is captured in this preview. We’re withholding a number until the comparison data supports a defensible range."
-              : "Enter your components to see the projection status for your setup. An FPS range will appear once comparable benchmark data is available."}
+            {estimate?.status === "estimated" ? estimate.summary : estimate?.status === "unsupported" ? estimate.message : estimateError || "Enter your components to see a projected range based on comparable-game benchmark summaries."}
           </p>
           <div className="result-meta">
-            <span>CONFIDENCE</span><b>NOT RATED</b>
+            <span>CONFIDENCE</span><b>{estimate?.status === "estimated" ? estimate.confidence.toUpperCase() : "NOT RATED"}</b>
           </div>
           <div className="result-meta">
-            <span>DATA BASIS</span><b>COMPARABLE GAMES</b>
+            <span>DATA BASIS</span><b>{estimate?.status === "estimated" ? `${estimate.evidence.length} PROXIES` : "COMPARABLE GAMES"}</b>
           </div>
-          {submitted && <div className="submitted-setup"><span>YOUR CONFIG</span><b>{setup.gpu} · {setup.cpu} · {setup.memory} GB · {setup.resolution}</b></div>}
+          {estimate?.status === "estimated" && <>
+            <div className="submitted-setup"><span>YOUR CONFIG</span><b>{estimate.hardware.gpu} · {estimate.hardware.cpu} · {estimate.hardware.memory} GB · {estimate.hardware.resolution} · {estimate.hardware.quality}</b></div>
+            <div className="estimate-details">
+              <h3>Comparable evidence</h3>
+              <ul>{estimate.evidence.map((item) => <li key={item.game}><a href={item.url} target="_blank" rel="noreferrer">{item.game}</a><span>{item.fps} FPS source median · {item.machines} GPUs</span></li>)}</ul>
+              <h3>Assumptions</h3>
+              <ul className="assumption-list">{estimate.assumptions.map((item) => <li key={item}>{item}</li>)}</ul>
+            </div>
+          </>}
         </aside>
       </section>
 
@@ -169,7 +205,7 @@ export default function Home() {
           <p>Comparable games can give us a useful starting point—but they can’t guarantee how a different PC version will run.</p>
         </div>
         <div className="method-steps">
-          <article className="method-step"><span>01</span><div><h3>Match the workload</h3><p>Compare your parts against demanding open-world games at similar settings.</p></div><b>↗</b></article>
+            <article className="method-step"><span>01</span><div><h3>Match the workload</h3><p>Compare your parts against demanding games at the selected resolution and a similar quality tier.</p></div><b>↗</b></article>
           <article className="method-step"><span>02</span><div><h3>Build a range</h3><p>Use relevant benchmark results and widen the range when evidence is thin.</p></div><b>↗</b></article>
           <article className="method-step"><span>03</span><div><h3>Show the basis</h3><p>See which comparisons informed the estimate, with the assumptions made clear.</p></div><b>↗</b></article>
         </div>
@@ -186,7 +222,7 @@ export default function Home() {
 
       <footer className="footer">
         <a className="brand footer-brand" href="#top"><span className="brand-mark" aria-hidden="true">C</span><span className="brand-name">CAN MY PC RUN <b>GTA 6?</b></span></a>
-        <p>Independent fan-made performance projection. Not affiliated with Rockstar Games.<br />Hardware names from <a href="https://gettechapi.github.io/TechAPI/" target="_blank" rel="noreferrer">TechAPI</a> · <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">CC BY-SA 4.0</a>.</p>
+        <p>Independent fan-made performance projection. Not affiliated with Rockstar Games.<br />Hardware names from <a href="https://gettechapi.github.io/TechAPI/" target="_blank" rel="noreferrer">TechAPI</a> · <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">CC BY-SA 4.0</a>.<br />Benchmark summaries from <a href="https://fpshq.com/en/data/" target="_blank" rel="noreferrer">FPSHQ</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>.</p>
         <a href="#top" className="back-top">BACK TO TOP ↑</a>
       </footer>
     </main>
