@@ -196,3 +196,31 @@ h1 em, h2 em { color: var(--orange); font-style: normal; }
 :root[data-theme="dark"] .autocomplete-option:hover,
 :root[data-theme="dark"] .autocomplete-option.is-active { background: #2a3527; }
 :root[data-theme="dark"] .autocomplete-option small { color: #a4b0a5; }
+
+.feedback-section { display: grid; grid-template-columns: .85fr 1.15fr; gap: 60px; align-items: start; padding: 0 0 68px; }
+.feedback-intro h2 { margin: 18px 0 14px; font-size: clamp(34px, 4vw, 51px); line-height: .98; letter-spacing: -.075em; }
+.feedback-intro > p:last-child { max-width: 320px; color: #6d7671; font-size: 12px; line-height: 1.7; }
+.feedback-form { display: flex; flex-direction: column; gap: 16px; padding: 25px; border: 1px solid var(--line); background: var(--panel); }
+.feedback-form .field i { color: var(--muted); font-size: 9px; font-style: normal; font-weight: 400; }
+.feedback-form textarea { width: 100%; min-height: 140px; resize: vertical; padding: 12px; border: 1px solid #dce0da; border-radius: 0; outline: none; background: #fbfbf8; color: var(--ink); font-size: 12px; line-height: 1.5; }
+.feedback-form textarea:focus { border-color: #83a93b; box-shadow: 0 0 0 2px rgb(196 242 108 / 35%); }
+.feedback-form textarea::placeholder { color: #a0a7a1; }
+.feedback-form .field input { font-weight: 400; }
+.feedback-privacy { margin: -4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.feedback-form .submit-button { margin-top: 0; }
+.feedback-form .submit-button:disabled { cursor: wait; opacity: .7; }
+.feedback-status { min-height: 15px; margin: -7px 0 0; color: #48652f; font-size: 11px; line-height: 1.5; }
+.feedback-status a { text-decoration: underline; text-underline-offset: 2px; }
+.feedback-status:has(a) { color: #9f4b35; }
+.feedback-honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+
+@media (max-width: 800px) {
+  .feedback-section { grid-template-columns: 1fr; gap: 25px; }
+}
+
+@media (max-width: 520px) {
+  .feedback-form { padding: 19px 16px; }
+  .feedback-section { padding-bottom: 50px; }
+}
+
+

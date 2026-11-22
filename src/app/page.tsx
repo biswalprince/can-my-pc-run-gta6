@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { HardwareAutocomplete } from "@/components/HardwareAutocomplete";
+import { FeedbackForm } from "@/components/FeedbackForm";
 
 type Setup = {
   gpu: string;
@@ -172,6 +173,15 @@ export default function Home() {
           <article className="method-step"><span>02</span><div><h3>Build a range</h3><p>Use relevant benchmark results and widen the range when evidence is thin.</p></div><b>↗</b></article>
           <article className="method-step"><span>03</span><div><h3>Show the basis</h3><p>See which comparisons informed the estimate, with the assumptions made clear.</p></div><b>↗</b></article>
         </div>
+      </section>
+
+      <section className="feedback-section" id="feedback">
+        <div className="feedback-intro">
+          <p className="eyebrow"><span>04</span> YOUR FEEDBACK</p>
+          <h2>Help us make<br /><em>this better.</em></h2>
+          <p>Tell us what’s confusing, what’s missing, or what you’d like to see next. Your note goes straight to the project owner.</p>
+        </div>
+        <FeedbackForm />
       </section>
 
       <footer className="footer">
