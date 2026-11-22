@@ -1,15 +1,26 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import type { KeyboardEvent } from "react";
-import type { HardwareOption } from "@/data/hardwareCatalog";
+
+type HardwareSuggestion = {
+  name: string;
+  slug: string;
+};
 
 type HardwareAutocompleteProps = {
   id: string;
+  kind: "cpu" | "gpu";
   value: string;
-  options: HardwareOption[];
   placeholder: string;
   onChange: (value: string) => void;
+};
+
+type SearchState = {
+  query: string;
+  loading: boolean;
+  error: boolean;
+  results: HardwareSuggestion[];
 };
 
 function normalize(value: string) {
@@ -18,50 +29,82 @@ function normalize(value: string) {
 
 export function HardwareAutocomplete({
   id,
+  kind,
   value,
-  options,
   placeholder,
   onChange,
 }: HardwareAutocompleteProps) {
   const listId = useId();
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [searchState, setSearchState] = useState<SearchState>({
+    query: "",
+    loading: false,
+    error: false,
+    results: [],
+  });
   const query = normalize(value);
+  const shouldSearch = open && query.length >= 2;
+  const currentSearch = searchState.query === query;
+  const matches = currentSearch ? searchState.results : [];
+  const loading = shouldSearch && (!currentSearch || searchState.loading);
+  const failed = shouldSearch && currentSearch && searchState.error;
 
-  const matches = useMemo(() => {
-    const ranked = options
-      .map((option) => {
-        const terms = [option.name, ...(option.aliases ?? [])].map(normalize);
-        const rank = query.length === 0
-          ? 0
-          : terms.some((term) => term.startsWith(query))
-            ? 0
-            : terms.some((term) => term.includes(query))
-              ? 1
-              : -1;
-        return { option, rank };
-      })
-      .filter((entry) => entry.rank >= 0)
-      .sort((a, b) => a.rank - b.rank || a.option.name.localeCompare(b.option.name));
+  useEffect(() => {
+    if (!open || query.length < 2) {
+      return;
+    }
 
-    return ranked.slice(0, 8).map((entry) => entry.option);
-  }, [options, query]);
+    const controller = new AbortController();
+    const searchQuery = query;
+    const timer = window.setTimeout(() => {
+      setSearchState({ query: searchQuery, loading: true, error: false, results: [] });
+      const params = new URLSearchParams({ type: kind, q: value.trim() });
 
-  function select(option: HardwareOption) {
+      fetch("/api/hardware?" + params.toString(), { signal: controller.signal })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Hardware catalog request failed.");
+          }
+          return response.json() as Promise<{ results: HardwareSuggestion[] }>;
+        })
+        .then((payload) => {
+          setSearchState({
+            query: searchQuery,
+            loading: false,
+            error: false,
+            results: payload.results,
+          });
+          setActiveIndex(-1);
+        })
+        .catch((error: unknown) => {
+          if (error instanceof DOMException && error.name === "AbortError") {
+            return;
+          }
+          setSearchState({ query: searchQuery, loading: false, error: true, results: [] });
+        });
+    }, 140);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [kind, open, query, value]);
+
+  function select(option: HardwareSuggestion) {
     onChange(option.name);
     setOpen(false);
     setActiveIndex(-1);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key === "ArrowDown") {
+    if (event.key === "ArrowDown" && matches.length > 0) {
       event.preventDefault();
-      setOpen(true);
       setActiveIndex((index) => Math.min(index + 1, matches.length - 1));
-    } else if (event.key === "ArrowUp") {
+    } else if (event.key === "ArrowUp" && matches.length > 0) {
       event.preventDefault();
       setActiveIndex((index) => Math.max(index - 1, 0));
-    } else if (event.key === "Enter" && open && activeIndex >= 0 && matches[activeIndex]) {
+    } else if (event.key === "Enter" && matches[activeIndex]) {
       event.preventDefault();
       select(matches[activeIndex]);
     } else if (event.key === "Escape") {
@@ -70,7 +113,7 @@ export function HardwareAutocomplete({
     }
   }
 
-  const showList = open && matches.length > 0;
+  const showList = shouldSearch && matches.length > 0;
 
   return (
     <div className="autocomplete">
@@ -93,7 +136,10 @@ export function HardwareAutocomplete({
           setActiveIndex(-1);
         }}
         onFocus={() => setOpen(true)}
-        onBlur={() => setOpen(false)}
+        onBlur={() => {
+          setOpen(false);
+          setActiveIndex(-1);
+        }}
         onKeyDown={handleKeyDown}
       />
       {showList && (
@@ -102,19 +148,25 @@ export function HardwareAutocomplete({
             <li
               className={"autocomplete-option" + (activeIndex === index ? " is-active" : "")}
               id={listId + "-option-" + index}
-              key={option.segment + "-" + option.name}
+              key={option.slug}
               role="option"
               aria-selected={activeIndex === index}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => select(option)}
             >
-              <span>{option.name}</span>
-              <small>{option.vendor} · {option.segment}</small>
+              {option.name}
             </li>
           ))}
         </ul>
       )}
-      {open && query.length > 0 && matches.length === 0 && (
+      {open && query.length < 2 && (
+        <div className="autocomplete-hint">Type at least 2 characters to search the hardware catalog.</div>
+      )}
+      {loading && <div className="autocomplete-hint">Searching hardware catalog…</div>}
+      {failed && (
+        <div className="autocomplete-empty">Suggestions are unavailable right now. You can still type your model.</div>
+      )}
+      {shouldSearch && !loading && !failed && matches.length === 0 && (
         <div className="autocomplete-empty">No catalog match. You can keep your typed model name.</div>
       )}
     </div>
