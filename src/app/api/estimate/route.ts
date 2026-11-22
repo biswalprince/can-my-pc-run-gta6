@@ -2,6 +2,8 @@ import { estimate, type EstimateInput } from "@/lib/estimator";
 
 const resolutions = new Set(["1080p", "1440p", "4K"]);
 const qualities = new Set(["Low", "Medium", "High", "Ultra"]);
+const resolutionOptions: EstimateInput["resolution"][] = ["1080p", "1440p", "4K"];
+const qualityOptions: EstimateInput["quality"][] = ["Low", "Medium", "High", "Ultra"];
 
 export async function POST(request: Request) {
   let body: Partial<EstimateInput>;
@@ -25,7 +27,19 @@ export async function POST(request: Request) {
     return Response.json({ error: "Enter valid hardware, memory, resolution, and quality settings." }, { status: 400 });
   }
 
-  return Response.json(estimate(body as EstimateInput), {
+  const input = body as EstimateInput;
+  const matrix = resolutionOptions.flatMap((resolution) =>
+    qualityOptions.map((quality) => ({
+      resolution,
+      quality,
+      result: estimate({ ...input, resolution, quality }),
+    })),
+  );
+  const selected = matrix.find((cell) =>
+    cell.resolution === input.resolution && cell.quality === input.quality,
+  )?.result ?? estimate(input);
+
+  return Response.json({ selected, matrix }, {
     headers: { "Cache-Control": "no-store" },
   });
 }

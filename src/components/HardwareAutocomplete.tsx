@@ -6,6 +6,7 @@ import type { KeyboardEvent } from "react";
 type HardwareSuggestion = {
   name: string;
   slug: string;
+  projectionAvailable: boolean;
 };
 
 type HardwareAutocompleteProps = {
@@ -37,6 +38,7 @@ export function HardwareAutocomplete({
   const listId = useId();
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [selectedAvailability, setSelectedAvailability] = useState<boolean | null>(null);
   const [searchState, setSearchState] = useState<SearchState>({
     query: "",
     loading: false,
@@ -93,6 +95,7 @@ export function HardwareAutocomplete({
 
   function select(option: HardwareSuggestion) {
     onChange(option.name);
+    setSelectedAvailability(option.projectionAvailable);
     setOpen(false);
     setActiveIndex(-1);
   }
@@ -125,6 +128,7 @@ export function HardwareAutocomplete({
         aria-autocomplete="list"
         aria-expanded={showList}
         aria-controls={listId}
+        aria-describedby={selectedAvailability === null ? undefined : listId + "-status"}
         aria-activedescendant={activeIndex >= 0 ? listId + "-option-" + activeIndex : undefined}
         autoComplete="off"
         value={value}
@@ -132,6 +136,7 @@ export function HardwareAutocomplete({
         required
         onChange={(event) => {
           onChange(event.target.value);
+          setSelectedAvailability(null);
           setOpen(true);
           setActiveIndex(-1);
         }}
@@ -154,7 +159,10 @@ export function HardwareAutocomplete({
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => select(option)}
             >
-              {option.name}
+              <span>{option.name}</span>
+              <small className={option.projectionAvailable ? "support-ready" : "support-missing"}>
+                {option.projectionAvailable ? "Projection data" : "No score yet"}
+              </small>
             </li>
           ))}
         </ul>
@@ -168,6 +176,13 @@ export function HardwareAutocomplete({
       )}
       {shouldSearch && !loading && !failed && matches.length === 0 && (
         <div className="autocomplete-empty">No catalog match. You can keep your typed model name.</div>
+      )}
+      {selectedAvailability !== null && (
+        <p className={"hardware-selection-status " + (selectedAvailability ? "support-ready" : "support-missing")} id={listId + "-status"}>
+          {selectedAvailability
+            ? "Ranking data found. This setup can receive a projected range."
+            : "No ranking match yet. The estimator will withhold an FPS range for this model."}
+        </p>
       )}
     </div>
   );
